@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'com.github.ben-manes.versions' version '0.43.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r'
+    implementation 'es.usc.citius.hipster:hipster-core:1.0.1'
+    implementation 'info.picocli:picocli:4.7.1'
+    implementation 'ch.qos.logback:logback-classic:1.4.7'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+
+    compileOnly 'org.projectlombok:lombok:1.18.26'
+    annotationProcessor 'org.projectlombok:lombok:1.18.26'
+    testCompileOnly 'org.projectlombok:lombok:1.18.26'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.26'
+}
+
+run {
+    standardInput = System.in
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "jp.ac.titech.c.se.diff.App"
+    }
+}
+
+application {
+    mainClassName = "jp.ac.titech.c.se.diff.App"
+}

@@ -1,0 +1,11 @@
+.idea/
+build/
+nbproject/
+target/
+
+*.iml
+.gradle
+._*
+bin/
+.DS_Store
+*~
