@@ -97,7 +97,7 @@ public final class App implements Callable<Integer> {
     }
 
     public static void main(String[] args) {
-        args = new String[] { "--loc", "--differencer=histogram", "samples/expand1.c", "samples/expand2.c" };
+        //args = new String[] { "--loc", "--differencer=histogram", "samples/expand1.c", "samples/expand2.c" };
         final App app = new App();
         final CommandLine cmdline = new CommandLine(app);
         cmdline.setExpandAtFiles(false);
