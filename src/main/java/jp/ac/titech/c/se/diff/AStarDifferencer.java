@@ -90,11 +90,11 @@ public final class AStarDifferencer<T> implements Differencer<T> {
             }
         }
 
-        static int n=0;
+        //static int n=0;
 
         @Override
         public State apply(final Chunk.Type op, final State state) {
-            System.out.printf("node%d ", n++);
+            //System.out.printf("node%d ", n++);
             switch (op) {
                 case INS:
                     return new State(state.s, state.t + 1);

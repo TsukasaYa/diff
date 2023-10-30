@@ -39,6 +39,7 @@ public final class App implements Callable<Integer> {
         final List<String> source = Files.readAllLines(sourceFile);
         final List<String> target = Files.readAllLines(targetFile);
         List<Chunk> diff = getDifferencer().computeDiff(source, target);
+        diff = Chunkase.degrade(diff, source.size(), target.size());
         show(diff, source, target);
         return 0;
     }
