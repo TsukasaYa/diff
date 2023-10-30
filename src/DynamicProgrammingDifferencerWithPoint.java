@@ -23,6 +23,11 @@ public final class DynamicProgrammingDifferencerWithPoint<T> implements Differen
         public boolean fromDiagonal = false;
         public boolean fromVertical = false;
         public boolean fromHorizontal = false;
+
+        public boolean diagPoint = false;
+        public boolean verticalPoint = false;
+        public boolean horizontalPoint = false;
+
         public Node(final int cost) {
             this.cost = cost;
         }
@@ -35,6 +40,22 @@ public final class DynamicProgrammingDifferencerWithPoint<T> implements Differen
                 matrix[i][j] = new Node(0);
             }
         }
+
+        for(Chunk p: points){
+            switch (p.type) {
+                case DEL:
+                    matrix[p.sourceStart][p.targetStart].horizontalPoint = true;
+                    break;                 
+                case INS:
+                case MOD:
+                    assert false;
+                    break;
+                case EQL:
+                default:
+                    assert false;
+            }
+        }
+
         for (int i = 1; i <= source.size(); i++) {
             matrix[i][0].cost = matrix[i - 1][0].cost + 1;
             matrix[i][0].fromHorizontal = true;

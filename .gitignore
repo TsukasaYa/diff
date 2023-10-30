@@ -2,6 +2,7 @@
 build/
 nbproject/
 target/
+samples/
 
 *.iml
 .gradle
