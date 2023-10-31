@@ -39,7 +39,7 @@ public final class App implements Callable<Integer> {
         final List<String> source = Files.readAllLines(sourceFile);
         final List<String> target = Files.readAllLines(targetFile);
         List<Chunk> diff = getDifferencer().computeDiff(source, target);
-        diff = Chunkase.degrade(diff, source.size(), target.size());
+        //diff = Chunkase.degrade(diff, source.size(), target.size());
         show(diff, source, target);
         return 0;
     }
@@ -90,7 +90,8 @@ public final class App implements Callable<Integer> {
 
     public Differencer<String> getDifferencer() {
         return switch (differencerType) {
-            case dp -> new DynamicProgrammingDifferencer<>();
+            //case dp -> new DynamicProgrammingDifferencer<>();
+            case dp -> new DynamicProgrammingDifferencerWithPoint<>();
             case astar -> new AStarDifferencer<>();
             case myers -> new JGitDifferencer.Myers<>();
             case histogram -> new JGitDifferencer.Histogram<>();
