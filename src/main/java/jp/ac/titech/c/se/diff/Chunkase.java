@@ -1,12 +1,6 @@
 package jp.ac.titech.c.se.diff;
 
 import java.util.List;
-
-import org.eclipse.jgit.diff.DiffEntry.ChangeType;
-import org.eclipse.jgit.lib.CoreConfig.EOL;
-
-import ch.qos.logback.core.subst.Token.Type;
-
 import java.util.ArrayList;
 
 public class Chunkase {
