@@ -88,11 +88,11 @@ public final class DynamicProgrammingDifferencer<T> implements Differencer<T> {
 
         final Node n = matrix[i][j];
         if (n.fromHorizontal) {
-            path.push(new Chunk(Chunk.Type.INS, i - 1, i - 1, j - 1, j));
+            path.push(new Chunk(Chunk.Type.INS, i, i, j - 1, j));
             return findSolution0(matrix, i, j - 1, path);
         }
         else if (n.fromVertical) {
-            path.push(new Chunk(Chunk.Type.DEL, i - 1, i, j - 1, j - 1));
+            path.push(new Chunk(Chunk.Type.DEL, i - 1, i, j, j));
             return findSolution0(matrix, i - 1, j, path);
         }
         else if (n.fromDiagonal) {

@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import java.util.ArrayList;
+
 public final class App implements Callable<Integer> {
     enum DifferencerType { dp, astar, myers, histogram }
 
@@ -38,10 +40,21 @@ public final class App implements Callable<Integer> {
     public Integer call() throws IOException {
         final List<String> source = Files.readAllLines(sourceFile);
         final List<String> target = Files.readAllLines(targetFile);
-        List<Chunk> diff = getDifferencer().computeDiff(source, target);
+        //List<Chunk> diff = getDifferencer().computeDiff(source, target);
         //diff = Chunkase.degrade(diff, source.size(), target.size());
+        List<Chunk> diff = getCorrectDiff(source, target);
         show(diff, source, target);
         return 0;
+    }
+
+    private List<Chunk> getCorrectDiff(final List<String> source, final List<String> target) {
+        List<Chunk> diff;
+        CorrectionDifferencer corrctionDifferencer = new CorrectionDynamicProgrammingDifferencer<String>(source, target);
+        List<Chunk> correction = new ArrayList<>();
+        correction.add(new Chunk(Chunk.Type.EQL, 3, 4, 11, 12));
+        correction.add(new Chunk(Chunk.Type.EQL, 4, 5, 12, 13));
+        diff = corrctionDifferencer.computeDiff(correction);
+        return diff;
     }
 
     public void show(List<Chunk> diff, List<String> source, List<String> target) {
@@ -90,8 +103,7 @@ public final class App implements Callable<Integer> {
 
     public Differencer<String> getDifferencer() {
         return switch (differencerType) {
-            //case dp -> new DynamicProgrammingDifferencer<>();
-            case dp -> new DynamicProgrammingDifferencerWithPoint<>();
+            case dp -> new DynamicProgrammingDifferencer<>();
             case astar -> new AStarDifferencer<>();
             case myers -> new JGitDifferencer.Myers<>();
             case histogram -> new JGitDifferencer.Histogram<>();
