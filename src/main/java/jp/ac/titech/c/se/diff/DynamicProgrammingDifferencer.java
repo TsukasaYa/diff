@@ -20,8 +20,8 @@ public final class DynamicProgrammingDifferencer<T> implements Differencer<T> {
     public static class Node {
         public int cost = 0;
         public boolean fromDiagonal = false;
-        public boolean fromVertical = false;
         public boolean fromHorizontal = false;
+        public boolean fromVertical = false;
         public Node(final int cost) {
             this.cost = cost;
         }
@@ -36,14 +36,14 @@ public final class DynamicProgrammingDifferencer<T> implements Differencer<T> {
         }
         for (int i = 1; i <= source.size(); i++) {
             matrix[i][0].cost = matrix[i - 1][0].cost + 1;
-            matrix[i][0].fromHorizontal = true;
-            matrix[i][0].fromVertical = false;
+            matrix[i][0].fromVertical = true;
+            matrix[i][0].fromHorizontal = false;
             matrix[i][0].fromDiagonal = false;
         }
         for (int j = 1; j <= target.size(); j++) {
             matrix[0][j].cost = matrix[0][j - 1].cost + 1;
-            matrix[0][j].fromHorizontal = false;
-            matrix[0][j].fromVertical = true;
+            matrix[0][j].fromVertical = false;
+            matrix[0][j].fromHorizontal = true;
             matrix[0][j].fromDiagonal = false;
         }
 
@@ -51,20 +51,20 @@ public final class DynamicProgrammingDifferencer<T> implements Differencer<T> {
             for (int j = 1; j <= target.size(); j++) {
                 boolean eq = equality.test(source.get(i - 1), target.get(j - 1));
                 final int diagonal = matrix[i - 1][j - 1].cost + (eq ? 0 : 100);
-                final int horizontal = matrix[i - 1][j].cost + 1;
-                final int vertical = matrix[i][j - 1].cost + 1;
-                final int min = Math.min(diagonal, Math.min(vertical, horizontal));
+                final int vertical = matrix[i - 1][j].cost + 1;
+                final int horizontal = matrix[i][j - 1].cost + 1;
+                final int min = Math.min(diagonal, Math.min(horizontal, vertical));
 
                 final Node node = matrix[i][j];
-                node.fromHorizontal = false;
                 node.fromVertical = false;
+                node.fromHorizontal = false;
                 node.fromDiagonal = false;
                 node.cost = min;
-                if (min == horizontal) {
-                    node.fromHorizontal = true;
-                }
                 if (min == vertical) {
                     node.fromVertical = true;
+                }
+                if (min == horizontal) {
+                    node.fromHorizontal = true;
                 }
                 if (min == diagonal) {
                     node.fromDiagonal = true;
@@ -87,11 +87,11 @@ public final class DynamicProgrammingDifferencer<T> implements Differencer<T> {
         }
 
         final Node n = matrix[i][j];
-        if (n.fromVertical) {
+        if (n.fromHorizontal) {
             path.push(new Chunk(Chunk.Type.INS, i - 1, i - 1, j - 1, j));
             return findSolution0(matrix, i, j - 1, path);
         }
-        else if (n.fromHorizontal) {
+        else if (n.fromVertical) {
             path.push(new Chunk(Chunk.Type.DEL, i - 1, i, j - 1, j - 1));
             return findSolution0(matrix, i - 1, j, path);
         }
