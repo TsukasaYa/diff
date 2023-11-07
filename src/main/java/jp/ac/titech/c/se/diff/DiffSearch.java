@@ -120,8 +120,7 @@ public final class DiffSearch implements
 
     @Override
     public Integer evaluate(Transition<Chunk, ModificationState> transition) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'evaluate'");
+        return 1;
     }
 
     @Override
