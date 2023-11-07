@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import es.usc.citius.hipster.util.Predicate;
+import jp.ac.titech.c.se.diff.AStarDifferencer.Search;
 import es.usc.citius.hipster.model.Node;
 
 import es.usc.citius.hipster.algorithm.Hipster;
@@ -30,15 +31,19 @@ public final class DiffSearch implements
     final List<String> source;
     final List<String> target;
     final List<Chunk> targetDiff;
+    final CorrectionDifferencer<String> corrctionDifferencer;
 
     public DiffSearch(List<String> source, List<String> target){
         this.source = source;
         this.target = target;
+        corrctionDifferencer = getCorrectionDifferencer(App.DifferencerType.dp, source, target);
         targetDiff = computeTargetDiff(source, target);
-        List<Chunk> diff = getCorrectDiff(source, target);
-        GoalPredicate gp = new GoalPredicate(diff);
+
+        Predicate gp = new GoalPredicate(targetDiff);
+
+        Hipster.createAStar(createProblem()).search(gp);
         
-        show(diff, true);
+        //show(targetDiff, true);
     }
 
     private List<Chunk> computeTargetDiff(List<String> source, List<String> target){
@@ -49,7 +54,6 @@ public final class DiffSearch implements
 
     //多分テスト用
     private List<Chunk> getCorrectDiff(final List<String> source, final List<String> target) {
-        CorrectionDifferencer<String> corrctionDifferencer = new CorrectionDynamicProgrammingDifferencer<>(source, target);
         List<Chunk> correction = new ArrayList<>();
 
         //この辺に指摘入れたいエッジを追加する
@@ -112,10 +116,21 @@ public final class DiffSearch implements
         };
     }
 
+    public SearchProblem<Chunk, ModificationState, WeightedNode<Chunk, ModificationState, Integer>> createProblem() {
+        return ProblemBuilder.create()
+            .initialState(new ModificationState(corrctionDifferencer.computeDiff(new HashSet<>())))
+            .defineProblemWithExplicitActions()
+            .useActionFunction(this)
+            .useTransitionFunction(this)
+            .useGenericCostFunction(this, new BinaryOperation<>(Integer::sum, 0, Integer.MAX_VALUE))
+            .useHeuristicFunction(this)
+            .build();
+    }
+
     @Override
     public Integer estimate(ModificationState state) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'estimate'");
+        //全探索
+        return 0;
     }
 
     @Override
@@ -126,8 +141,8 @@ public final class DiffSearch implements
     @Override
     public ModificationState apply(Chunk action, ModificationState state) {
         Collection<Chunk> correction = new HashSet<>(state.correction);
-        List<Chunk> path = new ArrayList<>(state.path);
-        path.add(action);
+        List<Chunk> path = corrctionDifferencer.computeDiff(correction);
+        correction.add(action);
         return new ModificationState(correction, path);
     }
 
@@ -135,18 +150,19 @@ public final class DiffSearch implements
     public Iterable<Chunk> actionsFor(ModificationState state) {
         return new ArrayList<Chunk>(CollectionUtils.subtract(targetDiff, state.path));
     }
-}
 
-class GoalPredicate implements Predicate<Node<?, ModificationState, ?>> {
+    class GoalPredicate<N> implements Predicate<N> {
 
-    final private List<Chunk> basePath;
+        final private List<Chunk> basePath;
 
-    public GoalPredicate(List<Chunk> path){
-    basePath = path;
+        public GoalPredicate(List<Chunk> path){
+        basePath = path;
+        }
+
+        @Override
+        public boolean apply(N node) {
+            return basePath.equals(node.state().path);
+        }
     }
 
-    @Override
-    public boolean apply(Node<?, ModificationState, ?> node) {
-        return basePath.equals(node.state().path);
-    }
 }

@@ -3,6 +3,7 @@ package jp.ac.titech.c.se.diff;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.HashSet;
 
 import java.lang.StringBuffer;
 
@@ -47,6 +48,10 @@ public final class CorrectionDynamicProgrammingDifferencer<T> implements Correct
                 }
             }
         }
+    }
+
+    public List<Chunk> computeDiff(){
+        return computeDiff(new HashSet<>());
     }
 
     @Override
