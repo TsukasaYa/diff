@@ -6,7 +6,7 @@ import java.util.function.BiPredicate;
 
 import java.lang.StringBuffer;
 
-public final class CorrectionDynamicProgrammingDifferencer<T> implements CorrectionDifferencer {
+public final class CorrectionDynamicProgrammingDifferencer<T> implements CorrectionDifferencer<T> {
 
     private final BiPredicate<T, T> equality;
 
@@ -54,7 +54,7 @@ public final class CorrectionDynamicProgrammingDifferencer<T> implements Correct
         for(Chunk c: correction){
             setWeight(c);
         }
-        showEditGraph();
+        //showEditGraph();
         DynamicProgrammingDifferencer.Node[][] matrix = makeMatrix();
         for(Chunk c: correction){
             resetWeight(c);
