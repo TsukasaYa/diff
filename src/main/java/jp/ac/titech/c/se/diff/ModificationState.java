@@ -14,5 +14,10 @@ public class ModificationState {
         correction = new HashSet<>();
         path = new ArrayList<>();
     }
+
+    public ModificationState(Collection<Chunk> correction, List<Chunk> path){
+        this.correction = correction;
+        this.path = path;
+    }
     
 }

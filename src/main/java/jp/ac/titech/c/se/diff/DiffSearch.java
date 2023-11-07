@@ -3,6 +3,7 @@ package jp.ac.titech.c.se.diff;
 import java.util.List;
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import es.usc.citius.hipster.util.Predicate;
 import es.usc.citius.hipster.model.Node;
@@ -125,8 +126,10 @@ public final class DiffSearch implements
 
     @Override
     public ModificationState apply(Chunk action, ModificationState state) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'apply'");
+        Collection<Chunk> correction = new HashSet<>(state.correction);
+        List<Chunk> path = new ArrayList<>(state.path);
+        path.add(action);
+        return new ModificationState(correction, path);
     }
 
     @Override
