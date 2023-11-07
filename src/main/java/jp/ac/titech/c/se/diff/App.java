@@ -49,7 +49,7 @@ public final class App implements Callable<Integer> {
 
     private List<Chunk> getCorrectDiff(final List<String> source, final List<String> target) {
         List<Chunk> diff;
-        CorrectionDifferencer corrctionDifferencer = new CorrectionDynamicProgrammingDifferencer<String>(source, target);
+        CorrectionDifferencer<String> corrctionDifferencer = new CorrectionDynamicProgrammingDifferencer<>(source, target);
         List<Chunk> correction = new ArrayList<>();
         correction.add(new Chunk(Chunk.Type.EQL, 3, 4, 11, 12));
         correction.add(new Chunk(Chunk.Type.EQL, 4, 5, 12, 13));

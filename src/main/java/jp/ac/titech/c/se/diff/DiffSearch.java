@@ -3,18 +3,38 @@ package jp.ac.titech.c.se.diff;
 import java.util.List;
 import java.util.Collection;
 import java.util.ArrayList;
+
 import es.usc.citius.hipster.util.Predicate;
 import es.usc.citius.hipster.model.Node;
 
-public final class DiffSearch{
+import es.usc.citius.hipster.algorithm.Hipster;
+import es.usc.citius.hipster.model.Transition;
+import es.usc.citius.hipster.model.function.ActionFunction;
+import es.usc.citius.hipster.model.function.ActionStateTransitionFunction;
+import es.usc.citius.hipster.model.function.CostFunction;
+import es.usc.citius.hipster.model.function.HeuristicFunction;
+import es.usc.citius.hipster.model.function.impl.BinaryOperation;
+import es.usc.citius.hipster.model.impl.WeightedNode;
+import es.usc.citius.hipster.model.problem.ProblemBuilder;
+import es.usc.citius.hipster.model.problem.SearchProblem;
+
+public final class DiffSearch implements
+    ActionFunction<Chunk, ModificationState>,
+    ActionStateTransitionFunction<Chunk, ModificationState>,
+    CostFunction<Chunk, ModificationState, Integer>,
+    HeuristicFunction<ModificationState, Integer>{
+
     final List<String> source;
     final List<String> target;
+    final List<Chunk> targetDiff;
 
     public DiffSearch(List<String> source, List<String> target){
         this.source = source;
         this.target = target;
-        final List<Chunk> targetDiff = computeTargetDiff(source, target);
+        targetDiff = computeTargetDiff(source, target);
         List<Chunk> diff = getCorrectDiff(source, target);
+        GoalPredicate gp = new GoalPredicate(diff);
+        
         show(diff, true);
     }
 
@@ -24,14 +44,16 @@ public final class DiffSearch{
         return diff;
     }
 
+    //多分テスト用
     private List<Chunk> getCorrectDiff(final List<String> source, final List<String> target) {
-        List<Chunk> diff;
-        CorrectionDifferencer corrctionDifferencer = new CorrectionDynamicProgrammingDifferencer<String>(source, target);
+        CorrectionDifferencer<String> corrctionDifferencer = new CorrectionDynamicProgrammingDifferencer<>(source, target);
         List<Chunk> correction = new ArrayList<>();
+
+        //この辺に指摘入れたいエッジを追加する
         correction.add(new Chunk(Chunk.Type.EQL, 3, 4, 11, 12));
         correction.add(new Chunk(Chunk.Type.EQL, 4, 5, 12, 13));
-        diff = corrctionDifferencer.computeDiff(correction);
-        return diff;
+
+        return corrctionDifferencer.computeDiff(correction);
     }
 
     public void show(List<Chunk> diff, boolean showLocation) {
@@ -78,13 +100,37 @@ public final class DiffSearch{
         }
     }
 
-    public Differencer<String> getDifferencer(App.DifferencerType differencerType) {
+    public CorrectionDifferencer<String> getCorrectionDifferencer(App.DifferencerType differencerType, List<String> source, List<String> target) {
         return switch (differencerType) {
-            case dp -> new DynamicProgrammingDifferencer<>();
-            case astar -> new AStarDifferencer<>();
-            case myers -> new JGitDifferencer.Myers<>();
-            case histogram -> new JGitDifferencer.Histogram<>();
+            case dp -> new CorrectionDynamicProgrammingDifferencer<>(source, target);
+            case astar -> throw new IllegalArgumentException("yet implementation");
+            case myers -> throw new IllegalArgumentException("no implementation");
+            case histogram -> throw new IllegalArgumentException("no implementation");
         };
+    }
+
+    @Override
+    public Integer estimate(ModificationState state) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'estimate'");
+    }
+
+    @Override
+    public Integer evaluate(Transition<Chunk, ModificationState> transition) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'evaluate'");
+    }
+
+    @Override
+    public ModificationState apply(Chunk action, ModificationState state) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'apply'");
+    }
+
+    @Override
+    public Iterable<Chunk> actionsFor(ModificationState state) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'actionsFor'");
     }
 }
 
