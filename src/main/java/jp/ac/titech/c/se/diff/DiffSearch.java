@@ -18,6 +18,8 @@ import es.usc.citius.hipster.model.impl.WeightedNode;
 import es.usc.citius.hipster.model.problem.ProblemBuilder;
 import es.usc.citius.hipster.model.problem.SearchProblem;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 public final class DiffSearch implements
     ActionFunction<Chunk, ModificationState>,
     ActionStateTransitionFunction<Chunk, ModificationState>,
@@ -129,8 +131,7 @@ public final class DiffSearch implements
 
     @Override
     public Iterable<Chunk> actionsFor(ModificationState state) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'actionsFor'");
+        return new ArrayList<Chunk>(CollectionUtils.subtract(targetDiff, state.path));
     }
 }
 
