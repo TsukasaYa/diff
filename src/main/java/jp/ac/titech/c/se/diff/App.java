@@ -22,6 +22,9 @@ public final class App implements Callable<Integer> {
     @Option(names = {"--loc"}, description = "Show location")
     boolean showLocation;
 
+    @Option(names = {"--search"}, description = "calculate step")
+    boolean search;
+
     @Parameters(index = "0", description = "Source file")
     Path sourceFile;
 
@@ -40,10 +43,15 @@ public final class App implements Callable<Integer> {
     public Integer call() throws IOException {
         final List<String> source = Files.readAllLines(sourceFile);
         final List<String> target = Files.readAllLines(targetFile);
-        //List<Chunk> diff = getDifferencer().computeDiff(source, target);
-        //diff = Chunkase.degrade(diff, source.size(), target.size());
-        List<Chunk> diff = getCorrectDiff(source, target);
-        show(diff, source, target);
+        List<Chunk> diff = getDifferencer().computeDiff(source, target);
+        diff = Chunkase.degrade(diff, source.size(), target.size());
+        //List<Chunk> diff = getCorrectDiff(source, target);
+        if(search){
+            DiffSearch ds = new DiffSearch(differencerType, source, target);
+            System.out.printf("step:%d\n",ds.search().size());
+        }else{
+            show(diff, source, target);
+        }
         return 0;
     }
 

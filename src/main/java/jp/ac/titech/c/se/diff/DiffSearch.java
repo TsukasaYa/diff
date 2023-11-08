@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import es.usc.citius.hipster.util.Predicate;
-import jp.ac.titech.c.se.diff.AStarDifferencer.Search;
 import es.usc.citius.hipster.model.Node;
 
 import es.usc.citius.hipster.algorithm.Hipster;
@@ -33,22 +32,23 @@ public final class DiffSearch implements
     final List<Chunk> targetDiff;
     final CorrectionDifferencer<String> corrctionDifferencer;
 
-    public DiffSearch(List<String> source, List<String> target){
+    public DiffSearch(App.DifferencerType type, List<String> source, List<String> target){
         this.source = source;
         this.target = target;
-        corrctionDifferencer = getCorrectionDifferencer(App.DifferencerType.dp, source, target);
+        corrctionDifferencer = getCorrectionDifferencer(type, source, target);
         targetDiff = computeTargetDiff(source, target);
+    }
 
-        Predicate gp = new GoalPredicate(targetDiff);
-
-        Hipster.createAStar(createProblem()).search(gp);
-        
+    public Collection<WeightedNode<Chunk, ModificationState, Integer>> search(){
+        Predicate<WeightedNode<Chunk, ModificationState, Integer>> gp = new GoalPredicate<>(targetDiff);
+        return Hipster.createAStar(createProblem()).search(gp).getGoalNode().path();
         //show(targetDiff, true);
     }
 
     private List<Chunk> computeTargetDiff(List<String> source, List<String> target){
         List<Chunk> diff = new JGitDifferencer.Histogram<String>().computeDiff(source, target);
         diff = Chunkase.degrade(diff, source.size(), target.size());
+        //diff = getCorrectDiff(source, target);
         return diff;
     }
 
@@ -129,8 +129,9 @@ public final class DiffSearch implements
 
     @Override
     public Integer estimate(ModificationState state) {
+        return CollectionUtils.subtract(targetDiff, state.path).size();
         //全探索
-        return 0;
+        //return 0;
     }
 
     @Override
@@ -151,7 +152,7 @@ public final class DiffSearch implements
         return new ArrayList<Chunk>(CollectionUtils.subtract(targetDiff, state.path));
     }
 
-    class GoalPredicate<N> implements Predicate<N> {
+    class GoalPredicate<N extends Node<Chunk, ModificationState, N>> implements Predicate<N> {
 
         final private List<Chunk> basePath;
 
