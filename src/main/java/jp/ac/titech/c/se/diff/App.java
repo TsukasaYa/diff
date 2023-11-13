@@ -10,6 +10,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import es.usc.citius.hipster.model.impl.WeightedNode;
+import jp.ac.titech.c.se.diff.DiffSearch.GoalPredicate;
+
 import java.util.ArrayList;
 
 public final class App implements Callable<Integer> {
@@ -24,6 +27,9 @@ public final class App implements Callable<Integer> {
 
     @Option(names = {"--search"}, description = "calculate step")
     boolean search;
+
+    @Option(names = {"--manual"}, description = "make diff with manual correction")
+    boolean manual;
 
     @Parameters(index = "0", description = "Source file")
     Path sourceFile;
@@ -49,6 +55,16 @@ public final class App implements Callable<Integer> {
         if(search){
             DiffSearch ds = new DiffSearch(differencerType, source, target);
             System.out.printf("step:%d\n",ds.search().size());
+        }else if(manual){
+            diff = getCorrectDiff(source, target);
+            List<Chunk> hisDiff = new JGitDifferencer.Histogram<String>().computeDiff(source, target);
+            hisDiff = Chunkase.degrade(hisDiff, source.size(), target.size());
+            //show(diff, source, target);
+            //show(hisDiff, source, target);
+            DiffSearch ds = new DiffSearch(differencerType, source, target);
+            GoalPredicate<WeightedNode<Chunk, ModificationState, Integer>> gp = ds.new GoalPredicate<>(hisDiff);
+            WeightedNode<Chunk,ModificationState,Integer> prevNode = null;
+            System.out.println(gp.apply(new WeightedNode<Chunk,ModificationState,Integer>(prevNode,new ModificationState(diff), null,null,null,null)));
         }else{
             show(diff, source, target);
         }

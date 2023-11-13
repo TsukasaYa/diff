@@ -32,17 +32,13 @@ public final class DiffSearch implements
     final List<Chunk> targetDiff;
     final CorrectionDifferencer<String> corrctionDifferencer;
 
+    static int SearchCount = 0;
+
     public DiffSearch(App.DifferencerType type, List<String> source, List<String> target){
         this.source = source;
         this.target = target;
         corrctionDifferencer = getCorrectionDifferencer(type, source, target);
         targetDiff = computeTargetDiff(source, target);
-    }
-
-    public Collection<WeightedNode<Chunk, ModificationState, Integer>> search(){
-        Predicate<WeightedNode<Chunk, ModificationState, Integer>> gp = new GoalPredicate<>(targetDiff);
-        return Hipster.createAStar(createProblem()).search(gp).getGoalNode().path();
-        //show(targetDiff, true);
     }
 
     private List<Chunk> computeTargetDiff(List<String> source, List<String> target){
@@ -107,6 +103,19 @@ public final class DiffSearch implements
         }
     }
 
+    public void dumpPath(List<Chunk> path){
+        for(Chunk c : path){
+            char type = switch (c.type){
+                case EQL -> 'E';
+                case DEL -> 'D';
+                case INS -> 'I';
+                case MOD -> 'M';
+            };
+            System.out.printf("%c",type);
+        }
+        System.out.printf("\n");
+    }
+
     public CorrectionDifferencer<String> getCorrectionDifferencer(App.DifferencerType differencerType, List<String> source, List<String> target) {
         return switch (differencerType) {
             case dp -> new CorrectionDynamicProgrammingDifferencer<>(source, target);
@@ -114,6 +123,12 @@ public final class DiffSearch implements
             case myers -> throw new IllegalArgumentException("no implementation");
             case histogram -> throw new IllegalArgumentException("no implementation");
         };
+    }
+    
+    public Collection<WeightedNode<Chunk, ModificationState, Integer>> search(){
+        Predicate<WeightedNode<Chunk, ModificationState, Integer>> gp = new GoalPredicate<>(targetDiff);
+        return Hipster.createAStar(createProblem()).search(gp).getGoalNode().path();
+        //show(targetDiff, true);
     }
 
     public SearchProblem<Chunk, ModificationState, WeightedNode<Chunk, ModificationState, Integer>> createProblem() {
@@ -142,14 +157,24 @@ public final class DiffSearch implements
     @Override
     public ModificationState apply(Chunk action, ModificationState state) {
         Collection<Chunk> correction = new HashSet<>(state.correction);
-        List<Chunk> path = corrctionDifferencer.computeDiff(correction);
         correction.add(action);
-        return new ModificationState(correction, path);
+        List<Chunk> path = corrctionDifferencer.computeDiff(correction);
+
+        System.out.printf("<%d:%d>",correction.size(), ++SearchCount);
+        dumpPath(path);
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        return new ModificationState(correction,path);
     }
 
     @Override
     public Iterable<Chunk> actionsFor(ModificationState state) {
-        return new ArrayList<Chunk>(CollectionUtils.subtract(targetDiff, state.path));
+        return new HashSet<Chunk>(CollectionUtils.subtract(targetDiff, state.path));
     }
 
     class GoalPredicate<N extends Node<Chunk, ModificationState, N>> implements Predicate<N> {
