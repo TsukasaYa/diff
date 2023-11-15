@@ -3,8 +3,6 @@ package jp.ac.titech.c.se.diff;
 import java.util.Collection;
 import java.util.List;
 
-import lombok.Value;
-
 import java.util.HashSet;
 
 public class ModificationState {
@@ -23,7 +21,6 @@ public class ModificationState {
     }
     
     public boolean equals(ModificationState obj) {
-        // TODO Auto-generated method stub
         return correction.equals(obj.correction);
     }
 

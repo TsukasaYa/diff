@@ -2,7 +2,6 @@ package jp.ac.titech.c.se.diff;
 
 import java.util.List;
 import java.util.Collection;
-import java.util.ArrayList;
 import java.util.HashSet;
 
 import es.usc.citius.hipster.util.Predicate;
@@ -31,6 +30,7 @@ public final class DiffSearch implements
     final List<String> target;
     final List<Chunk> targetDiff;
     final CorrectionDifferencer<String> corrctionDifferencer;
+    final static int STEPWEIGHT = 1000;
 
     static int SearchCount = 0;
 
@@ -46,17 +46,6 @@ public final class DiffSearch implements
         diff = Chunkase.degrade(diff, source.size(), target.size());
         //diff = getCorrectDiff(source, target);
         return diff;
-    }
-
-    //多分テスト用
-    private List<Chunk> getCorrectDiff(final List<String> source, final List<String> target) {
-        List<Chunk> correction = new ArrayList<>();
-
-        //この辺に指摘入れたいエッジを追加する
-        correction.add(new Chunk(Chunk.Type.EQL, 3, 4, 11, 12));
-        correction.add(new Chunk(Chunk.Type.EQL, 4, 5, 12, 13));
-
-        return corrctionDifferencer.computeDiff(correction);
     }
 
     public void show(List<Chunk> diff, boolean showLocation) {
@@ -116,6 +105,19 @@ public final class DiffSearch implements
         System.out.printf("\n");
     }
 
+    public void dumpCorrection(Collection<Chunk> correction){
+        for(Chunk c : correction){
+            char type = switch (c.type){
+                case EQL -> 'E';
+                case DEL -> 'D';
+                case INS -> 'I';
+                case MOD -> 'M';
+            };
+            System.out.printf("[%c:%d,%d]",type,c.sourceStart,c.targetStart);
+        }
+        System.out.printf("\n");
+    }
+
     public CorrectionDifferencer<String> getCorrectionDifferencer(App.DifferencerType differencerType, List<String> source, List<String> target) {
         return switch (differencerType) {
             case dp -> new CorrectionDynamicProgrammingDifferencer<>(source, target);
@@ -125,15 +127,25 @@ public final class DiffSearch implements
         };
     }
     
-    public Collection<WeightedNode<Chunk, ModificationState, Integer>> search(){
+    public void search(){
         Predicate<WeightedNode<Chunk, ModificationState, Integer>> gp = new GoalPredicate<>(targetDiff);
-        return Hipster.createAStar(createProblem()).search(gp).getGoalNode().path();
-        //show(targetDiff, true);
+        ModificationState initState = new ModificationState(corrctionDifferencer.computeDiff(new HashSet<>()));
+
+        System.out.printf("initial:");
+        dumpPath(initState.path);
+        System.out.printf("target :");
+        dumpPath(targetDiff);
+
+        WeightedNode<Chunk, ModificationState, Integer> result = Hipster.createAStar(createProblem(initState)).search(gp).getGoalNode();
+        System.out.printf("step:%d\n",result.path().size());
+        dumpCorrection(result.state().correction);
+        System.out.printf("path   :");
+        dumpPath(result.state().path);
     }
 
-    public SearchProblem<Chunk, ModificationState, WeightedNode<Chunk, ModificationState, Integer>> createProblem() {
+    public SearchProblem<Chunk, ModificationState, WeightedNode<Chunk, ModificationState, Integer>> createProblem(ModificationState initState) {
         return ProblemBuilder.create()
-            .initialState(new ModificationState(corrctionDifferencer.computeDiff(new HashSet<>())))
+            .initialState(initState)
             .defineProblemWithExplicitActions()
             .useActionFunction(this)
             .useTransitionFunction(this)
@@ -144,14 +156,14 @@ public final class DiffSearch implements
 
     @Override
     public Integer estimate(ModificationState state) {
-        return CollectionUtils.subtract(targetDiff, state.path).size();
+        return CollectionUtils.subtract(targetDiff, state.path).size()*STEPWEIGHT;
         //全探索
         //return 0;
     }
 
     @Override
     public Integer evaluate(Transition<Chunk, ModificationState> transition) {
-        return 1;
+        return STEPWEIGHT+transition.getAction().targetStart;
     }
 
     @Override
@@ -160,21 +172,25 @@ public final class DiffSearch implements
         correction.add(action);
         List<Chunk> path = corrctionDifferencer.computeDiff(correction);
 
-        System.out.printf("<%d:%d>",correction.size(), ++SearchCount);
+        /*
+        System.out.printf("<%d:%d>\n",correction.size(), ++SearchCount);
         dumpPath(path);
+        dumpCorrection(correction);
+
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        
+        */
+
         return new ModificationState(correction,path);
     }
 
     @Override
     public Iterable<Chunk> actionsFor(ModificationState state) {
-        return new HashSet<Chunk>(CollectionUtils.subtract(targetDiff, state.path));
+        return new HashSet<Chunk>(CollectionUtils.subtract(state.path, targetDiff));
     }
 
     class GoalPredicate<N extends Node<Chunk, ModificationState, N>> implements Predicate<N> {
