@@ -55,7 +55,6 @@ public final class App implements Callable<Integer> {
         if(search){
             DiffSearch ds = new DiffSearch(differencerType, source, target);
             ds.search();
-            //System.out.printf("step:%d\n",ds.search().size());
         }else if(manual){
             diff = getCorrectDiff(source, target);
             List<Chunk> hisDiff = new JGitDifferencer.Histogram<String>().computeDiff(source, target);

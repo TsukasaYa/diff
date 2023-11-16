@@ -163,7 +163,7 @@ public final class DiffSearch implements
 
     @Override
     public Integer evaluate(Transition<Chunk, ModificationState> transition) {
-        return STEPWEIGHT+transition.getAction().targetStart;
+        return STEPWEIGHT;
     }
 
     @Override
