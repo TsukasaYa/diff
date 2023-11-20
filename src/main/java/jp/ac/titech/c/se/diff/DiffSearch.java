@@ -95,7 +95,8 @@ public final class DiffSearch implements
         }
     }
 
-    public void dumpPath(List<Chunk> path){
+    public String getPathAsString(List<Chunk> path){
+        StringBuffer sb = new StringBuffer();
         for(Chunk c : path){
             char type = switch (c.type){
                 case EQL -> 'E';
@@ -103,12 +104,13 @@ public final class DiffSearch implements
                 case INS -> 'I';
                 case MOD -> 'M';
             };
-            System.out.printf("%c",type);
+            sb.append(type);
         }
-        System.out.printf("\n");
+        return sb.toString();
     }
 
-    public void dumpCorrection(Collection<Chunk> correction){
+    public String getCorrectionAsString(Collection<Chunk> correction){
+        StringBuffer sb = new StringBuffer();
         for(Chunk c : correction){
             char type = switch (c.type){
                 case EQL -> 'E';
@@ -116,9 +118,12 @@ public final class DiffSearch implements
                 case INS -> 'I';
                 case MOD -> 'M';
             };
-            System.out.printf("[%c:%d,%d]",type,c.sourceStart,c.targetStart);
+            sb.append(String.format("[%c:%d,%d]", type, c.sourceStart, c.targetStart));
+            //sb.append(type);
+            //sb.append(c.sourceStart);
+            //sb.append(c.targetStart);
         }
-        System.out.printf("\n");
+        return sb.toString();
     }
 
     public CorrectionDifferencer<String> getCorrectionDifferencer(App.DifferencerType differencerType, List<String> source, List<String> target) {
@@ -137,22 +142,24 @@ public final class DiffSearch implements
         if(detail){
             System.out.printf("differencer:%s\n", corrctionDifferencer.getClass().getSimpleName());
             System.out.printf("initial:");
-            dumpPath(initState.path);
+            System.out.println(getPathAsString(initState.path));
             System.out.printf("target :");
-            dumpPath(targetDiff);
+            System.out.println(getPathAsString(targetDiff));
         }
 
         var searchResult = Hipster.createAStar(createProblem(initState)).search(gp);
         WeightedNode<Chunk, ModificationState, Integer> result = searchResult.getGoalNode();
         System.out.printf("%d corrections:",result.state().correction.size());
-        dumpCorrection(result.state().correction);
+        System.out.println(getCorrectionAsString(result.state().correction));
 
         if(detail){
-            dumpCorrection(result.state().correction);
             System.out.printf("path   :");
-            dumpPath(result.state().path);
+            System.out.println(getPathAsString(result.state().path));
+            System.out.println(result.toString());
+            /*
             System.out.printf("time   :%d\n",searchResult.getElapsed());
             System.out.printf("iterate:%d\n",searchResult.getIterations());
+            */
         }
     }
 
