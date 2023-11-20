@@ -31,6 +31,9 @@ public final class App implements Callable<Integer> {
     @Option(names = {"--manual"}, description = "make diff with manual correction")
     boolean manual;
 
+    @Option(names = {"--detail"}, description = "print detail of search")
+    boolean detail;
+
     @Parameters(index = "0", description = "Source file")
     Path sourceFile;
 
@@ -53,7 +56,7 @@ public final class App implements Callable<Integer> {
         diff = Chunkase.degrade(diff, source.size(), target.size());
         //List<Chunk> diff = getCorrectDiff(source, target);
         if(search){
-            DiffSearch ds = new DiffSearch(differencerType, source, target);
+            DiffSearch ds = new DiffSearch(differencerType, source, target, detail);
             ds.search();
         }else if(manual){
             diff = getCorrectDiff(source, target);
@@ -61,7 +64,7 @@ public final class App implements Callable<Integer> {
             hisDiff = Chunkase.degrade(hisDiff, source.size(), target.size());
             //show(diff, source, target);
             //show(hisDiff, source, target);
-            DiffSearch ds = new DiffSearch(differencerType, source, target);
+            DiffSearch ds = new DiffSearch(differencerType, source, target, detail);
             GoalPredicate<WeightedNode<Chunk, ModificationState, Integer>> gp = ds.new GoalPredicate<>(hisDiff);
             WeightedNode<Chunk,ModificationState,Integer> prevNode = null;
             System.out.println(gp.apply(new WeightedNode<Chunk,ModificationState,Integer>(prevNode,new ModificationState(diff), null,null,null,null)));

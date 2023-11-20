@@ -6,8 +6,9 @@ import java.util.HashSet;
 
 import es.usc.citius.hipster.util.Predicate;
 import es.usc.citius.hipster.model.Node;
-
+import es.usc.citius.hipster.algorithm.Algorithm;
 import es.usc.citius.hipster.algorithm.Hipster;
+import es.usc.citius.hipster.algorithm.Algorithm.SearchResult;
 import es.usc.citius.hipster.model.Transition;
 import es.usc.citius.hipster.model.function.ActionFunction;
 import es.usc.citius.hipster.model.function.ActionStateTransitionFunction;
@@ -31,12 +32,14 @@ public final class DiffSearch implements
     final List<Chunk> targetDiff;
     final CorrectionDifferencer<String> corrctionDifferencer;
     final static int STEPWEIGHT = 1000;
+    final boolean detail;
 
     static int SearchCount = 0;
 
-    public DiffSearch(App.DifferencerType type, List<String> source, List<String> target){
+    public DiffSearch(App.DifferencerType type, List<String> source, List<String> target, boolean detail){
         this.source = source;
         this.target = target;
+        this.detail = detail;
         corrctionDifferencer = getCorrectionDifferencer(type, source, target);
         targetDiff = computeTargetDiff(source, target);
     }
@@ -131,16 +134,26 @@ public final class DiffSearch implements
         Predicate<WeightedNode<Chunk, ModificationState, Integer>> gp = new GoalPredicate<>(targetDiff);
         ModificationState initState = new ModificationState(corrctionDifferencer.computeDiff(new HashSet<>()));
 
-        System.out.printf("initial:");
-        dumpPath(initState.path);
-        System.out.printf("target :");
-        dumpPath(targetDiff);
+        if(detail){
+            System.out.printf("differencer:%s\n", corrctionDifferencer.getClass().getSimpleName());
+            System.out.printf("initial:");
+            dumpPath(initState.path);
+            System.out.printf("target :");
+            dumpPath(targetDiff);
+        }
 
-        WeightedNode<Chunk, ModificationState, Integer> result = Hipster.createAStar(createProblem(initState)).search(gp).getGoalNode();
-        System.out.printf("step:%d\n",result.path().size());
+        var searchResult = Hipster.createAStar(createProblem(initState)).search(gp);
+        WeightedNode<Chunk, ModificationState, Integer> result = searchResult.getGoalNode();
+        System.out.printf("%d corrections:",result.state().correction.size());
         dumpCorrection(result.state().correction);
-        System.out.printf("path   :");
-        dumpPath(result.state().path);
+
+        if(detail){
+            dumpCorrection(result.state().correction);
+            System.out.printf("path   :");
+            dumpPath(result.state().path);
+            System.out.printf("time   :%d\n",searchResult.getElapsed());
+            System.out.printf("iterate:%d\n",searchResult.getIterations());
+        }
     }
 
     public SearchProblem<Chunk, ModificationState, WeightedNode<Chunk, ModificationState, Integer>> createProblem(ModificationState initState) {
