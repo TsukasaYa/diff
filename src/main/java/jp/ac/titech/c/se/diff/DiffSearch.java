@@ -46,7 +46,7 @@ public final class DiffSearch implements
 
     private List<Chunk> computeTargetDiff(List<String> source, List<String> target){
         List<Chunk> diff = new JGitDifferencer.Histogram<String>().computeDiff(source, target);
-        diff = Chunkase.degrade(diff, source.size(), target.size());
+        //diff = Chunkase.degrade(diff, source.size(), target.size());
         //diff = getCorrectDiff(source, target);
         return diff;
     }
@@ -155,7 +155,7 @@ public final class DiffSearch implements
         if(detail){
             System.out.printf("path   :");
             System.out.println(getPathAsString(result.state().path));
-            System.out.println(result.toString());
+            System.out.println(searchResult.toString());
             /*
             System.out.printf("time   :%d\n",searchResult.getElapsed());
             System.out.printf("iterate:%d\n",searchResult.getIterations());
@@ -192,15 +192,15 @@ public final class DiffSearch implements
         correction.add(action);
         List<Chunk> path = corrctionDifferencer.computeDiff(correction);
 
-        /*
-        System.out.printf("<%d:%d>\n",correction.size(), ++SearchCount);
-        dumpPath(path);
-        dumpCorrection(correction);
+        String pathString = getPathAsString(path);
+        int sameNum = CollectionUtils.intersection(targetDiff,path).size();
+        String correctionString = getCorrectionAsString(correction);
+        System.out.println(String.format("<%d:%d> %s",SearchCount++, sameNum, correctionString));
 
+        /*
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         */
