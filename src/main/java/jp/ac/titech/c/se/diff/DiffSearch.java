@@ -46,7 +46,7 @@ public final class DiffSearch implements
 
     private List<Chunk> computeTargetDiff(List<String> source, List<String> target){
         List<Chunk> diff = new JGitDifferencer.Histogram<String>().computeDiff(source, target);
-        //diff = Chunkase.degrade(diff, source.size(), target.size());
+        diff = Chunkase.degrade(diff, source.size(), target.size());
         //diff = getCorrectDiff(source, target);
         return diff;
     }
