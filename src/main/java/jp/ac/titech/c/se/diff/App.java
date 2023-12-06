@@ -34,6 +34,9 @@ public final class App implements Callable<Integer> {
     @Option(names = {"--detail"}, description = "print detail of search")
     boolean detail;
 
+    @Option(names = {"--log"}, description = "print search step")
+    boolean logging;
+
     @Parameters(index = "0", description = "Source file")
     Path sourceFile;
 
@@ -56,7 +59,7 @@ public final class App implements Callable<Integer> {
         diff = Chunkase.degrade(diff, source.size(), target.size());
         //List<Chunk> diff = getCorrectDiff(source, target);
         if(search){
-            DiffSearch ds = new DiffSearch(differencerType, source, target, detail);
+            DiffSearch ds = new DiffSearch(differencerType, source, target, detail, logging);
             ds.search();
         }else if(manual){
             diff = getCorrectDiff(source, target);
@@ -64,7 +67,7 @@ public final class App implements Callable<Integer> {
             hisDiff = Chunkase.degrade(hisDiff, source.size(), target.size());
             //show(diff, source, target);
             //show(hisDiff, source, target);
-            DiffSearch ds = new DiffSearch(differencerType, source, target, detail);
+            DiffSearch ds = new DiffSearch(differencerType, source, target, detail, logging);
             GoalPredicate<WeightedNode<Chunk, ModificationState, Integer>> gp = ds.new GoalPredicate<>(hisDiff);
             WeightedNode<Chunk,ModificationState,Integer> prevNode = null;
             System.out.println(gp.apply(new WeightedNode<Chunk,ModificationState,Integer>(prevNode,new ModificationState(diff), null,null,null,null)));
@@ -76,10 +79,10 @@ public final class App implements Callable<Integer> {
 
     private List<Chunk> getCorrectDiff(final List<String> source, final List<String> target) {
         List<Chunk> diff;
-        CorrectionDifferencer<String> corrctionDifferencer = new CorrectionDynamicProgrammingDifferencer<>(source, target);
+        CorrectionDifferencer<String> corrctionDifferencer = new CorrectionAstarDifferencer<>(source, target);
         List<Chunk> correction = new ArrayList<>();
-        correction.add(new Chunk(Chunk.Type.EQL, 3, 4, 11, 12));
-        correction.add(new Chunk(Chunk.Type.EQL, 4, 5, 12, 13));
+        //correction.add(new Chunk(Chunk.Type.EQL, 3, 4, 11, 12));
+        //correction.add(new Chunk(Chunk.Type.EQL, 4, 5, 12, 13));
         diff = corrctionDifferencer.computeDiff(correction);
         return diff;
     }

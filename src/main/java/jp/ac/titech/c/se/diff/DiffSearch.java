@@ -6,7 +6,6 @@ import java.util.HashSet;
 
 import es.usc.citius.hipster.util.Predicate;
 import es.usc.citius.hipster.model.Node;
-import es.usc.citius.hipster.algorithm.Algorithm;
 import es.usc.citius.hipster.algorithm.Hipster;
 import es.usc.citius.hipster.algorithm.Algorithm.SearchResult;
 import es.usc.citius.hipster.model.Transition;
@@ -33,13 +32,15 @@ public final class DiffSearch implements
     final CorrectionDifferencer<String> corrctionDifferencer;
     final static int STEPWEIGHT = 1000;
     final boolean detail;
+    final boolean logging;
 
-    static int SearchCount = 0;
+    static int searchCount = 0;
 
-    public DiffSearch(App.DifferencerType type, List<String> source, List<String> target, boolean detail){
+    public DiffSearch(App.DifferencerType type, List<String> source, List<String> target, boolean detail, boolean logging){
         this.source = source;
         this.target = target;
         this.detail = detail;
+        this.logging = logging;
         corrctionDifferencer = getCorrectionDifferencer(type, source, target);
         targetDiff = computeTargetDiff(source, target);
     }
@@ -51,43 +52,25 @@ public final class DiffSearch implements
         return diff;
     }
 
-    public void show(List<Chunk> diff, boolean showLocation) {
-        for (Chunk c : diff) {
+    public void showCorrection(Collection<Chunk> correction) {
+        for (Chunk c : correction) {
             switch (c.type) {
                 case DEL:
-                    if (showLocation) {
-                        System.out.printf("@@ -%d,%d +%d @@\n", c.sourceStart, c.sourceEnd - 1, c.targetStart);
-                    }
-                    for (int i = c.sourceStart; i < c.sourceEnd; i++) {
-                        System.out.println("- " + source.get(i));
-                    }
+                    System.out.printf("@@ -%d,%d +%d @@\n", c.sourceStart, c.sourceEnd - 1, c.targetStart);
+                    System.out.println("- " + source.get(c.sourceStart));
                     break;
                 case INS:
-                    if (showLocation) {
-                        System.out.printf("@@ -%d +%d,%d @@\n", c.sourceStart, c.targetStart, c.targetEnd - 1);
-                    }
-                    for (int i = c.targetStart; i < c.targetEnd; i++) {
-                        System.out.println("+ " + target.get(i));
-                    }
+                    System.out.printf("@@ -%d +%d,%d @@\n", c.sourceStart, c.targetStart, c.targetEnd - 1);
+                    System.out.println("+ " + target.get(c.targetStart));
                     break;
                 case MOD:
-                    if (showLocation) {
-                        System.out.printf("@@ -%d,%d +%d,%d @@\n", c.sourceStart, c.sourceEnd - 1, c.targetStart, c.targetEnd - 1);
-                    }
-                    for (int i = c.sourceStart; i < c.sourceEnd; i++) {
-                        System.out.println("- " + source.get(i));
-                    }
-                    for (int i = c.targetStart; i < c.targetEnd; i++) {
-                        System.out.println("+ " + target.get(i));
-                    }
+                    System.out.printf("@@ -%d,%d +%d,%d @@\n", c.sourceStart, c.sourceEnd - 1, c.targetStart, c.targetEnd - 1);
+                    System.out.println("- " + source.get(c.sourceStart));
+                    System.out.println("+ " + target.get(c.targetStart));
                     break;
                 case EQL:
-                    if (showLocation) {
-                        System.out.printf("@@ -%d,%d +%d,%d @@\n", c.sourceStart, c.sourceEnd - 1, c.targetStart, c.targetEnd - 1);
-                    }
-                    for (int i = c.sourceStart; i < c.sourceEnd; i++) {
-                        System.out.println("  " + source.get(i));
-                    }
+                    System.out.printf("@@ -%d,%d +%d,%d @@\n", c.sourceStart, c.sourceEnd - 1, c.targetStart, c.targetEnd - 1);
+                    System.out.println("  " + source.get(c.sourceStart));
                     break;
                 default:
                     assert false;
@@ -129,7 +112,7 @@ public final class DiffSearch implements
     public CorrectionDifferencer<String> getCorrectionDifferencer(App.DifferencerType differencerType, List<String> source, List<String> target) {
         return switch (differencerType) {
             case dp -> new CorrectionDynamicProgrammingDifferencer<>(source, target);
-            case astar -> throw new IllegalArgumentException("yet implementation");
+            case astar -> new CorrectionAstarDifferencer<>(source, target);
             case myers -> throw new IllegalArgumentException("no implementation");
             case histogram -> throw new IllegalArgumentException("no implementation");
         };
@@ -153,13 +136,11 @@ public final class DiffSearch implements
         System.out.println(getCorrectionAsString(result.state().correction));
 
         if(detail){
+            showCorrection(result.state().correction);
             System.out.printf("path   :");
             System.out.println(getPathAsString(result.state().path));
+            System.err.printf("apply  :%d\n",searchCount);
             System.out.println(searchResult.toString());
-            /*
-            System.out.printf("time   :%d\n",searchResult.getElapsed());
-            System.out.printf("iterate:%d\n",searchResult.getIterations());
-            */
         }
     }
 
@@ -192,10 +173,8 @@ public final class DiffSearch implements
         correction.add(action);
         List<Chunk> path = corrctionDifferencer.computeDiff(correction);
 
-        String pathString = getPathAsString(path);
-        int sameNum = CollectionUtils.intersection(targetDiff,path).size();
-        String correctionString = getCorrectionAsString(correction);
-        System.out.println(String.format("<%d:%d> %s",SearchCount++, sameNum, correctionString));
+        searchCount++;
+        if (logging) printApplyLog(correction, path);
 
         /*
         try {
@@ -206,6 +185,13 @@ public final class DiffSearch implements
         */
 
         return new ModificationState(correction,path);
+    }
+
+    private void printApplyLog(Collection<Chunk> correction, List<Chunk> path) {
+        //String pathString = getPathAsString(path);
+        int sameNum = CollectionUtils.intersection(targetDiff,path).size();
+        String correctionString = getCorrectionAsString(correction);
+        System.out.println(String.format("<%d:%d> %s",searchCount, sameNum, correctionString));
     }
 
     @Override
